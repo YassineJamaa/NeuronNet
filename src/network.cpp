@@ -59,7 +59,7 @@ size_t Network::random_connect(const double &mean_deg, const double &mean_streng
             if (add_link(node, nodeidx[nn], strength[nl])) nl++;
         num_links += nl;
     }
-    return num_links;
+    return num_links; 
 }
 
 std::vector<double> Network::potentials() const {
@@ -128,3 +128,65 @@ void Network::print_traj(const int time, const std::map<std::string, size_t> &_n
             }
     (*_out) << std::endl;
 }
+
+
+
+std::vector<std::pair<size_t, double> > Network::neighbors(const size_t& k) const{ //ajout
+	std::vector<std::pair<size_t, double> > resultat;
+	for (linkmap::const_iterator it =links.lower_bound({k,0}); it!=links.cend() and ((it->first).first == k); ++it){
+		resultat.push_back( std::make_pair((it->first).second, it->second));	
+	}
+	return resultat;	
+}
+ 
+
+std::pair<size_t, double> Network::degree(const size_t &k) const{ //ajout
+	std::vector<std::pair<size_t, double> > signal_total( neighbors(k));
+	double tot(0.0);
+	size_t tot_neuron(0);
+	for(size_t i(0); i<signal_total.size() ; i++){//anotation
+		tot += signal_total[i].second;
+		++tot_neuron;
+	}
+	std::pair <size_t,double> degree_neuron( std::make_pair( tot_neuron, tot));
+	return degree_neuron;
+}
+
+std::set<size_t> Network::step(const std::vector<double>& j){
+	std::set<size_t> resultat;
+	double w;
+	double excitateur, inhibiteur;
+	for(size_t i(0) ; i < neurons.size() ; ++i){
+			if(neurons[i].firing()){ 
+				neurons[i].reset();
+				resultat.insert(i);
+		}
+	}
+	for(size_t t(0) ; t < neurons.size() ; ++t){
+		excitateur = 0.0;
+		inhibiteur = 0.0;
+		if(neurons[t].is_inhibitory()){
+			w= 0.4;
+		}else{
+			w=1;
+		}
+		std::vector<std::pair<size_t, double> > voisin = neighbors(t);
+		for( size_t h(0) ; h< voisin.size() ; ++h){
+			if(neurons[voisin[h].first].is_inhibitory() and resultat.count(h) == 1 ){
+				inhibiteur += voisin[h].second;
+			}
+			if(!neurons[voisin[h].first].is_inhibitory() and resultat.count(h) == 1 ){
+			
+				excitateur += voisin[h].second;
+			}
+				
+		}
+		neurons[t].input(w*j[t] + 0.5*excitateur + inhibiteur);
+		neurons[t].step();
+	}
+		
+	
+	return resultat;
+}
+
+

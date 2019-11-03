@@ -100,7 +100,7 @@ void Simulation::load_configuration(const std::string &infile) {
                 // comment lines start with #
                 if (line[0] == '#') continue;
                 std::stringstream ss(line);
-                std::getline(ss, item, ';');
+                std::getline(ss, item, ';'); 
                 key = item.substr(0, 4);
                 std::transform(key.begin(), key.end(), key.begin(), ::tolower);
                 if (key.compare("link") == 0) {
@@ -151,6 +151,7 @@ void Simulation::load_configuration(const std::string &infile) {
 }
 
 void Simulation::run() {
+	
     std::ofstream outf(output), outf2, outf3;
     if (output.size() && outf.bad()) 
         throw(OUTPUT_ERROR(std::string("Cannot write to file ")+output));
